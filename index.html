@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Random List Shuffler</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            width: 100%;
+            max-width: 500px;
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 1.8rem;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #888;
+            margin-bottom: 30px;
+            font-size: 0.9rem;
+        }
+
+        .input-section {
+            margin-bottom: 20px;
+        }
+
+        input[type="text"] {
+            width: 100%;
+            padding: 15px 20px;
+            font-size: 1rem;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            outline: none;
+            transition: border-color 0.3s, box-shadow 0.3s;
+        }
+
+        input[type="text"]:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.2);
+        }
+
+        .counter {
+            text-align: center;
+            color: #667eea;
+            font-weight: 600;
+            margin: 15px 0;
+            font-size: 1.1rem;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 25px;
+        }
+
+        button {
+            flex: 1;
+            padding: 15px 25px;
+            font-size: 1rem;
+            font-weight: 600;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s, background 0.3s;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        .shuffle-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .shuffle-btn:hover {
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.5);
+        }
+
+        .secondary-btn {
+            background: #f0f0f0;
+            color: #666;
+        }
+
+        .secondary-btn:hover {
+            background: #e0e0e0;
+        }
+
+        .secondary-btn.clear-mode {
+            background: #ff6b6b;
+            color: white;
+        }
+
+        .secondary-btn.clear-mode:hover {
+            background: #ee5a5a;
+        }
+
+        .results {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 20px;
+            min-height: 100px;
+            display: none;
+        }
+
+        .results.visible {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .results h3 {
+            color: #333;
+            margin-bottom: 15px;
+            font-size: 1rem;
+        }
+
+        .result-item {
+            background: white;
+            padding: 12px 18px;
+            margin-bottom: 8px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            animation: slideIn 0.3s ease;
+            animation-fill-mode: both;
+        }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateX(-20px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+
+        .result-number {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.85rem;
+            font-weight: 600;
+            flex-shrink: 0;
+        }
+
+        .result-text {
+            color: #333;
+            font-size: 1rem;
+        }
+
+        .empty-message {
+            text-align: center;
+            color: #999;
+            padding: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎲 Random Shuffler</h1>
+        <p class="subtitle">Add items and shuffle them into a random order</p>
+        
+        <div class="input-section">
+            <input type="text" id="itemInput" placeholder="Type an item and press Enter..." autofocus>
+        </div>
+        
+        <div class="counter">
+            <span id="itemCount">0</span> items added
+        </div>
+        
+        <div class="button-group">
+            <button class="shuffle-btn" id="shuffleBtn">🎲 Shuffle & Show</button>
+            <button class="secondary-btn" id="secondaryBtn">+ Enter</button>
+        </div>
+        
+        <div class="results" id="results">
+            <h3>Randomized Order:</h3>
+            <div id="resultsList"></div>
+        </div>
+    </div>
+
+    <script>
+        const items = [];
+        const itemInput = document.getElementById('itemInput');
+        const itemCount = document.getElementById('itemCount');
+        const shuffleBtn = document.getElementById('shuffleBtn');
+        const secondaryBtn = document.getElementById('secondaryBtn');
+        const results = document.getElementById('results');
+        const resultsList = document.getElementById('resultsList');
+
+        let listVisible = false;
+
+        function addItem() {
+            if (itemInput.value.trim()) {
+                items.push(itemInput.value.trim());
+                itemInput.value = '';
+                updateCounter();
+                hideResults();
+            }
+            itemInput.focus();
+        }
+
+        function hideResults() {
+            if (listVisible) {
+                results.classList.remove('visible');
+                listVisible = false;
+                updateSecondaryButton();
+            }
+        }
+
+        function updateSecondaryButton() {
+            if (listVisible) {
+                secondaryBtn.textContent = '🗑️ Clear All';
+                secondaryBtn.classList.add('clear-mode');
+            } else {
+                secondaryBtn.textContent = '+ Enter';
+                secondaryBtn.classList.remove('clear-mode');
+            }
+        }
+
+        function updateCounter() {
+            itemCount.textContent = items.length;
+        }
+
+        // Add item on Enter key
+        itemInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                addItem();
+            }
+        });
+
+        // Secondary button: Enter or Clear All
+        secondaryBtn.addEventListener('click', () => {
+            if (listVisible) {
+                // Clear all
+                items.length = 0;
+                updateCounter();
+                results.classList.remove('visible');
+                listVisible = false;
+                updateSecondaryButton();
+                itemInput.focus();
+            } else {
+                // Enter item
+                addItem();
+            }
+        });
+
+        // Shuffle and show
+        shuffleBtn.addEventListener('click', () => {
+            if (items.length === 0) {
+                resultsList.innerHTML = '<p class="empty-message">No items added yet!</p>';
+                results.classList.add('visible');
+                listVisible = false;
+                updateSecondaryButton();
+                return;
+            }
+
+            const shuffled = [...items].sort(() => Math.random() - 0.5);
+            resultsList.innerHTML = '';
+            
+            shuffled.forEach((item, index) => {
+                const div = document.createElement('div');
+                div.className = 'result-item';
+                div.style.animationDelay = `${index * 0.05}s`;
+                div.innerHTML = `
+                    <span class="result-number">${index + 1}</span>
+                    <span class="result-text">${escapeHtml(item)}</span>
+                `;
+                resultsList.appendChild(div);
+            });
+
+            results.classList.add('visible');
+            listVisible = true;
+            updateSecondaryButton();
+        });
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+    </script>
+</body>
+</html>
